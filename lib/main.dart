@@ -285,9 +285,7 @@ class _PinPutState extends State<PinPut> {
                 ),
               ),
             ),
-            Center(
-              child: pinInput(index),
-            ),
+            pinInput(index),
           ],
         ),
       );
@@ -319,8 +317,9 @@ class _PinPutState extends State<PinPut> {
     );
   }
 
-  TextField? pinInput(index) {
+  TextField pinInput(index) {
     return TextField(
+      key: ValueKey(index),
       controller: textControllers[index],
       textAlign: TextAlign.center,
       showCursor: false,
