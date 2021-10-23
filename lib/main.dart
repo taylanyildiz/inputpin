@@ -4,9 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-void main() {
-  runApp(App());
-}
+void main() => runApp(App());
 
 class App extends StatelessWidget {
   @override
@@ -14,9 +12,7 @@ class App extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Flutter Activation Code',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
+      theme: ThemeData(primarySwatch: Colors.blue),
       home: HomeScreen(),
     );
   }
@@ -39,47 +35,51 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            PinPut(
-              controller: PinPutController(),
-              focusNode: FocusNode(),
-              autoFocus: true,
-              padding: 20.0,
-              height: 70.0,
-              onCode: (input) {
-                log(input!);
-              },
-              cursorColor: Colors.transparent,
-              pinType: PinKeyboardType.name,
-              style: TextStyle(
-                color: Colors.black45,
-                fontWeight: FontWeight.bold,
-                fontSize: 24.0,
-              ),
-            ),
-            SizedBox(height: 50.0),
-            SizedBox(
-              width: 200.0,
-              child: MaterialButton(
-                onPressed: () {
-                  log(code);
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).requestFocus(),
+      child: Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              PinPut(
+                controller: PinPutController(),
+                focusNode: FocusNode(),
+                autoFocus: true,
+                padding: 20.0,
+                height: 70.0,
+                onCode: (input) {
+                  log(input!);
                 },
-                child: Text(
-                  'Test',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20.0,
-                    fontWeight: FontWeight.bold,
-                  ),
+                cursorColor: Colors.green,
+                fillColor: Colors.white,
+                pinType: PinKeyboardType.number,
+                style: TextStyle(
+                  color: Colors.black45,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24.0,
                 ),
-                color: Colors.blue,
               ),
-            ),
-          ],
+              SizedBox(height: 50.0),
+              SizedBox(
+                width: 200.0,
+                child: MaterialButton(
+                  onPressed: () {
+                    log(code);
+                  },
+                  child: Text(
+                    'Test',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20.0,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  color: Colors.blue,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -149,9 +149,9 @@ class _PinPutState extends State<PinPut> {
     for (var i = 0; i < widget.pinCount; i++) {
       focusNodes.add(FocusNode());
       textControllers.add(TextEditingController()
-        ..addListener(() {
-          setState(() {});
-        }));
+        ..addListener(
+          () => setState(() {}),
+        ));
     }
     getKeyboardType();
     if (widget.focusNode != null) {
@@ -205,11 +205,6 @@ class _PinPutState extends State<PinPut> {
     super.dispose();
   }
 
-  @override
-  void deactivate() {
-    super.deactivate();
-  }
-
   void callBack() {
     String code = '';
     codeList.forEach((element) {
@@ -250,7 +245,6 @@ class _PinPutState extends State<PinPut> {
         focusNodes[index + 1].requestFocus();
         codeList[index] = input;
       } else {
-        print('ok');
         codeList[index] = input;
       }
       callBack();
@@ -273,14 +267,14 @@ class _PinPutState extends State<PinPut> {
           alignment: Alignment.center,
           children: [
             Visibility(
-              visible: focusNodes[index].hasFocus,
+              visible: textControllers[index].text.isNotEmpty,
               child: ClipRRect(
                 child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+                  filter: ImageFilter.blur(sigmaX: 1.0, sigmaY: 1.0),
                   child: Container(
                     color: textControllers[index].text.isEmpty
-                        ? Colors.grey.withOpacity(.3)
-                        : Colors.white.withOpacity(.3),
+                        ? widget.initialColor.withOpacity(.1)
+                        : null,
                   ),
                 ),
               ),
@@ -293,7 +287,7 @@ class _PinPutState extends State<PinPut> {
   BoxDecoration? boxDecoration(index) {
     return BoxDecoration(
       border: Border.all(
-        width: 3.0,
+        width: 1.5,
         color: focusNodes[index].hasFocus
             ? index != widget.pinCount - 1
                 ? widget.cursorColor
@@ -345,7 +339,7 @@ class _PinPutState extends State<PinPut> {
   InputDecoration? inputDecoration(index) {
     return InputDecoration(
       counterText: '',
-      hintText: focusNodes[index].hasFocus ? '' : widget.defaultText,
+      hintText: focusNodes[index].hasFocus ? null : widget.defaultText,
       border: inputBorder,
       focusedBorder: inputBorder,
       enabledBorder: inputBorder,
