@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -46,13 +47,14 @@ class _HomeScreenState extends State<HomeScreen> {
             PinPut(
               controller: PinPutController(),
               focusNode: FocusNode(),
+              autoFocus: true,
               padding: 20.0,
               height: 70.0,
               onCode: (input) {
                 log(input!);
               },
               cursorColor: Colors.transparent,
-              pinType: PinKeyboardType.number,
+              pinType: PinKeyboardType.name,
               style: TextStyle(
                 color: Colors.black45,
                 fontWeight: FontWeight.bold,
@@ -135,6 +137,7 @@ class PinPut extends StatefulWidget {
 
 class _PinPutState extends State<PinPut> {
   final focusNodes = <FocusNode>[];
+  final focusLisen = FocusNode();
   final textControllers = <TextEditingController>[];
   late List<String> codeList;
   TextInputType? keyboardType;
@@ -215,57 +218,78 @@ class _PinPutState extends State<PinPut> {
     widget.onCode.call(code);
   }
 
-  void onKeyListen(RawKeyEvent event, int index) async {
-    if (textControllers[index].text.isEmpty && index != 0) {
-      if (event.logicalKey == LogicalKeyboardKey.backspace) {
-        focusNodes[index - 1].requestFocus();
-      }
-      codeList[index] = '';
-      callBack();
-    } else if (textControllers[index].text.isNotEmpty) {
-      print('object');
-      if (event.logicalKey != LogicalKeyboardKey.backspace) {
-        if (index != widget.pinCount - 1) {
-          final eventKey = event.logicalKey.keyLabel.toString().toLowerCase();
-          print(eventKey);
-          textControllers[index + 1].text = eventKey;
-          codeList[index + 1] = eventKey;
+  void onKeyListen(RawKeyEvent event) async {
+    if (event.runtimeType.toString() == 'RawKeyDownEvent') {
+      int index = focusNodes.indexWhere((element) => element.hasFocus);
+      if (index != -1) {
+        if (textControllers[index].text.isEmpty && index != 0) {
+          if (event.logicalKey == LogicalKeyboardKey.backspace) {
+            focusNodes[index - 1].requestFocus();
+          }
+        } else if (textControllers[index].text.isNotEmpty) {
+          if (event.logicalKey != LogicalKeyboardKey.backspace) {
+            if (index != widget.pinCount - 1) {
+              final eventKey =
+                  event.logicalKey.keyLabel.toString().toLowerCase();
+              print(eventKey);
+              textControllers[index + 1].text = eventKey;
+              codeList[index + 1] = eventKey;
+            }
+          } else if (event.logicalKey == LogicalKeyboardKey.backspace) {
+            codeList[index] = '';
+          }
         }
-      } else if (event.logicalKey == LogicalKeyboardKey.backspace) {
-        codeList[index] = '';
-      }
-      callBack();
-    }
-  }
-
-  void onChangeListen(String? input, int index) {
-    if (input!.isNotEmpty) {
-      codeList[index] = input;
-      if (index != widget.pinCount - 1) {
-        focusNodes[index + 1].requestFocus();
       }
     }
     callBack();
   }
 
+  void onChangeListen(String? input, int index) {
+    if (input!.isNotEmpty) {
+      if (index != widget.pinCount - 1) {
+        focusNodes[index + 1].requestFocus();
+        codeList[index] = input;
+      } else {
+        print('ok');
+        codeList[index] = input;
+      }
+      callBack();
+    }
+  }
+
   List<Widget> get pinPut => List.generate(
         widget.pinCount,
         (index) => Expanded(
-          child: RawKeyboardListener(
-            focusNode: FocusNode(),
-            onKey: (event) => onKeyListen(event, index),
-            child: pinBox(index),
-          ),
+          child: pinBox(index),
         ),
       );
 
   Widget pinBox(index) => AnimatedContainer(
         height: double.infinity,
         margin: EdgeInsets.symmetric(horizontal: widget.runSpace),
-        padding: EdgeInsets.symmetric(horizontal: 10.0),
         duration: Duration(milliseconds: 200),
         decoration: boxDecoration(index),
-        child: Center(child: pinInput(index)),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Visibility(
+              visible: focusNodes[index].hasFocus,
+              child: ClipRRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+                  child: Container(
+                    color: textControllers[index].text.isEmpty
+                        ? Colors.grey.withOpacity(.3)
+                        : Colors.white.withOpacity(.3),
+                  ),
+                ),
+              ),
+            ),
+            Center(
+              child: pinInput(index),
+            ),
+          ],
+        ),
       );
 
   BoxDecoration? boxDecoration(index) {
@@ -299,7 +323,7 @@ class _PinPutState extends State<PinPut> {
     return TextField(
       controller: textControllers[index],
       textAlign: TextAlign.center,
-      showCursor: focusNodes[index].canRequestFocus ? true : false,
+      showCursor: false,
       cursorColor: Colors.black,
       autofocus: index == 0 ? widget.autoFocus : false,
       focusNode: focusNodes[index],
@@ -313,6 +337,9 @@ class _PinPutState extends State<PinPut> {
       onChanged: (input) => onChangeListen(input, index),
       decoration: inputDecoration(index),
       inputFormatters: inputFormatters,
+      enableInteractiveSelection: false,
+      autocorrect: false,
+      enableSuggestions: false,
     );
   }
 
@@ -334,13 +361,17 @@ class _PinPutState extends State<PinPut> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: widget.padding),
+    return RawKeyboardListener(
+      focusNode: FocusNode(),
+      onKey: (event) => onKeyListen(event),
       child: SizedBox(
         height: widget.height,
         width: width,
-        child: Row(
-          children: pinPut,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: widget.padding),
+          child: Row(
+            children: pinPut,
+          ),
         ),
       ),
     );
