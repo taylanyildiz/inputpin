@@ -31,7 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
   }
 
-  String code = '';
+  String? code ;
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: 20.0,
                 height: 70.0,
                 onCode: (input) {
-                  log(input!);
+                  code = input;
                 },
                 cursorColor: Colors.green,
                 fillColor: Colors.white,
@@ -65,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: 200.0,
                 child: MaterialButton(
                   onPressed: () {
-                    log(code);
+                    log(code??'empty');
                   },
                   child: Text(
                     'Test',
@@ -113,7 +113,6 @@ class PinPut extends StatefulWidget {
     this.defaultText = '—',
   })  : assert(pinCount != 0),
         super(key: key);
-
   final PinPutController controller;
   final bool autoFocus;
   final FocusNode? focusNode;
@@ -136,58 +135,57 @@ class PinPut extends StatefulWidget {
 }
 
 class _PinPutState extends State<PinPut> {
-  final focusNodes = <FocusNode>[];
-  final focusLisen = FocusNode();
-  final textControllers = <TextEditingController>[];
-  late List<String> codeList;
-  TextInputType? keyboardType;
-  List<TextInputFormatter>? inputFormatters;
+  final _focusNodes = <FocusNode>[];
+  final _textControllers = <TextEditingController>[];
+  late List<String> _codeList;
+  TextInputType? _keyboardType;
+  List<TextInputFormatter>? _inputFormatters;
 
   @override
   void initState() {
-    codeList = List.generate(widget.pinCount, (index) => '');
+    _codeList = List.generate(widget.pinCount, (index) => '');
     for (var i = 0; i < widget.pinCount; i++) {
-      focusNodes.add(FocusNode());
-      textControllers.add(TextEditingController()
+      _focusNodes.add(FocusNode());
+      _textControllers.add(TextEditingController()
         ..addListener(
           () => setState(() {}),
         ));
     }
-    getKeyboardType();
+    _getKeyboardType();
     if (widget.focusNode != null) {
-      focusNodes[0] = widget.focusNode!;
+      _focusNodes[0] = widget.focusNode!;
     }
     widget.controller._addListener(() {
-      focusNodes[0].requestFocus();
+      _focusNodes[0].requestFocus();
       for (var i = 0; i < widget.pinCount; i++) {
-        codeList[i] = '';
-        textControllers[i].text = '';
+        _codeList[i] = '';
+        _textControllers[i].text = '';
       }
     });
     super.initState();
   }
 
-  void getKeyboardType() {
+  void _getKeyboardType() {
     switch (widget.pinType) {
       case PinKeyboardType.text:
-        keyboardType = TextInputType.text;
-        inputFormatters = [
+        _keyboardType = TextInputType.text;
+        _inputFormatters = [
           FilteringTextInputFormatter.allow(
             RegExp(r'[a-z A-Z 0-9]'),
           )
         ];
         break;
       case PinKeyboardType.name:
-        keyboardType = TextInputType.name;
-        inputFormatters = [
+        _keyboardType = TextInputType.name;
+        _inputFormatters = [
           FilteringTextInputFormatter.allow(
             RegExp(r'[a-z A-Z]'),
           )
         ];
         break;
       case PinKeyboardType.number:
-        keyboardType = TextInputType.number;
-        inputFormatters = [
+        _keyboardType = TextInputType.number;
+        _inputFormatters = [
           FilteringTextInputFormatter.allow(
             RegExp(r'[0-9]'),
           )
@@ -199,55 +197,59 @@ class _PinPutState extends State<PinPut> {
   @override
   void dispose() {
     for (var i = 0; i < widget.pinCount; i++) {
-      textControllers[i].dispose();
-      focusNodes[i].dispose();
+      _textControllers[i].dispose();
+      _focusNodes[i].dispose();
     }
     super.dispose();
   }
 
-  void callBack() {
+  void _listenEvents() {
     String code = '';
-    codeList.forEach((element) {
+    _codeList.forEach((element) {
       code = code + element;
     });
-    widget.onCode.call(code);
+    if (code.isNotEmpty) {
+      widget.onCode.call(code);
+    } else {
+      widget.onCode.call(null);
+    }
   }
 
-  void onKeyListen(RawKeyEvent event) async {
+  void _onKeyListen(RawKeyEvent event) async {
     if (event.runtimeType.toString() == 'RawKeyDownEvent') {
-      int index = focusNodes.indexWhere((element) => element.hasFocus);
+      int index = _focusNodes.indexWhere((element) => element.hasFocus);
       if (index != -1) {
-        if (textControllers[index].text.isEmpty && index != 0) {
+        if (_textControllers[index].text.isEmpty && index != 0) {
           if (event.logicalKey == LogicalKeyboardKey.backspace) {
-            focusNodes[index - 1].requestFocus();
+            _focusNodes[index - 1].requestFocus();
           }
-        } else if (textControllers[index].text.isNotEmpty) {
+        } else if (_textControllers[index].text.isNotEmpty) {
           if (event.logicalKey != LogicalKeyboardKey.backspace) {
             if (index != widget.pinCount - 1) {
               final eventKey =
                   event.logicalKey.keyLabel.toString().toLowerCase();
               print(eventKey);
-              textControllers[index + 1].text = eventKey;
-              codeList[index + 1] = eventKey;
+              _textControllers[index + 1].text = eventKey;
+              _codeList[index + 1] = eventKey;
             }
           } else if (event.logicalKey == LogicalKeyboardKey.backspace) {
-            codeList[index] = '';
+            _codeList[index] = '';
           }
         }
       }
     }
-    callBack();
+    _listenEvents();
   }
 
-  void onChangeListen(String? input, int index) {
+  void _onChangeListen(String? input, int index) {
     if (input!.isNotEmpty) {
       if (index != widget.pinCount - 1) {
-        focusNodes[index + 1].requestFocus();
-        codeList[index] = input;
+        _focusNodes[index + 1].requestFocus();
+        _codeList[index] = input;
       } else {
-        codeList[index] = input;
+        _codeList[index] = input;
       }
-      callBack();
+      _listenEvents();
     }
   }
 
@@ -267,12 +269,12 @@ class _PinPutState extends State<PinPut> {
           alignment: Alignment.center,
           children: [
             Visibility(
-              visible: textControllers[index].text.isNotEmpty,
+              visible: _textControllers[index].text.isNotEmpty,
               child: ClipRRect(
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 1.0, sigmaY: 1.0),
                   child: Container(
-                    color: textControllers[index].text.isEmpty
+                    color: _textControllers[index].text.isEmpty
                         ? widget.initialColor.withOpacity(.1)
                         : null,
                   ),
@@ -288,16 +290,16 @@ class _PinPutState extends State<PinPut> {
     return BoxDecoration(
       border: Border.all(
         width: 1.5,
-        color: focusNodes[index].hasFocus
+        color: _focusNodes[index].hasFocus
             ? index != widget.pinCount - 1
                 ? widget.cursorColor
-                : textControllers[index].text.isEmpty
+                : _textControllers[index].text.isEmpty
                     ? widget.cursorColor
                     : Colors.transparent
             : Colors.transparent,
       ),
       borderRadius: BorderRadius.circular(widget.radius),
-      color: textControllers[index].text.isEmpty
+      color: _textControllers[index].text.isEmpty
           ? widget.initialColor
           : widget.fillColor,
       boxShadow: widget.shadow ??
@@ -311,25 +313,25 @@ class _PinPutState extends State<PinPut> {
     );
   }
 
-  TextField pinInput(index) {
-    return TextField(
+  Widget pinInput(index) {
+    return TextFormField(
       key: ValueKey(index),
-      controller: textControllers[index],
+      controller: _textControllers[index],
       textAlign: TextAlign.center,
       showCursor: false,
       cursorColor: Colors.black,
       autofocus: index == 0 ? widget.autoFocus : false,
-      focusNode: focusNodes[index],
-      keyboardType: keyboardType,
+      focusNode: _focusNodes[index],
+      keyboardType: _keyboardType,
       maxLength: 1,
       style: TextStyle(
         fontSize: (widget.style?.fontSize ?? 20.0) - widget.runSpace / 2,
         fontWeight: widget.style?.fontWeight ?? FontWeight.w600,
         color: widget.style?.color ?? Colors.black,
       ),
-      onChanged: (input) => onChangeListen(input, index),
+      onChanged: (input) => _onChangeListen(input, index),
       decoration: inputDecoration(index),
-      inputFormatters: inputFormatters,
+      inputFormatters: _inputFormatters,
       enableInteractiveSelection: false,
       autocorrect: false,
       enableSuggestions: false,
@@ -339,7 +341,7 @@ class _PinPutState extends State<PinPut> {
   InputDecoration? inputDecoration(index) {
     return InputDecoration(
       counterText: '',
-      hintText: focusNodes[index].hasFocus ? null : widget.defaultText,
+      hintText: _focusNodes[index].hasFocus ? null : widget.defaultText,
       border: inputBorder,
       focusedBorder: inputBorder,
       enabledBorder: inputBorder,
@@ -356,15 +358,13 @@ class _PinPutState extends State<PinPut> {
     final width = MediaQuery.of(context).size.width;
     return RawKeyboardListener(
       focusNode: FocusNode(),
-      onKey: (event) => onKeyListen(event),
+      onKey: (event) => _onKeyListen(event),
       child: SizedBox(
         height: widget.height,
         width: width,
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: widget.padding),
-          child: Row(
-            children: pinPut,
-          ),
+          child: Row(children: pinPut),
         ),
       ),
     );
