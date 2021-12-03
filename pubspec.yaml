@@ -1,4 +1,4 @@
-name: telephone_and_active_code
+name: flutter_input_pin
 description: A new Flutter project.
 publish_to: 'none'
 version: 1.0.0+1
@@ -11,7 +11,6 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.2
-  flutter_polygon: ^0.2.0
 
 dev_dependencies:
   flutter_lints: ^1.0.0

@@ -1,5 +1,4 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'pin_put.dart';
@@ -9,51 +8,54 @@ const String _rawKeyEvent = "RawKeyDownEvent";
 class PinBox extends State<PinPut> with SingleTickerProviderStateMixin {
   /// Animation controller
   late AnimationController controller;
-  late Animation<double> animation;
 
   /// Constructor [PinBox].
   PinBox.pin();
 
-  int get length => widget.pinLenght;
+  TextStyle get _style => widget.textStyle;
 
-  bool get autoFocus => widget.autoFocus;
+  int get _length => widget.pinLenght;
 
-  Decoration get initDecoartion => widget.initDecoration;
+  bool get _autoFocus => widget.autoFocus;
 
-  Decoration get focusDecoration => widget.focusDecoration;
+  Decoration get _initDecoartion => widget.initDecoration;
 
-  Decoration get fillDecoration => widget.fillDecoration;
+  Decoration get _focusDecoration => widget.focusDecoration;
 
-  List textConList = List<TextEditingController>.empty(growable: true);
+  Decoration get _fillDecoration => widget.fillDecoration;
 
-  List focusList = List<FocusNode>.empty(growable: true);
+  TextInputType get _keyBoardType => widget.pinType.type;
 
-  FocusNode get focusNode => widget.focusNode ?? focusList.first;
+  List<TextInputFormatter> get _inputFilter => widget.pinType.filter;
 
-  TextInputType get keyBoardType => widget.pinType.type;
+  PinPutController? get _pinController => widget.pinController;
 
-  List<TextInputFormatter> get inputFilter => widget.pinType.filter;
+  final List _textCon = List<TextEditingController>.empty(growable: true);
 
-  PinPutController? get pinController => widget.pinController;
+  final List _focusList = List<FocusNode>.empty(growable: true);
 
-  String text(index) => textConList[index].text;
+  final List _pins = List<String>.empty(growable: true);
 
-  Widget get hint => widget.hint;
+  String _text(index) => _textCon[index].text;
 
-  _FocusNodeController _focusNodeController(index) => _FocusNodeController(
-        focusList[index],
-        textConList[index],
-        focusDecoration,
-        initDecoartion,
-        fillDecoration,
-        index == length - 1,
+  Widget get _hint => widget.hint;
+
+  _PinDecoration _decoration(index) => _PinDecoration(
+        _focusList[index],
+        _textCon[index],
+        _focusDecoration,
+        _initDecoartion,
+        _fillDecoration,
+        index == _length - 1,
       );
 
-  double get height => 70.0;
+  double get _height => widget.size;
 
-  double get space => 20.0;
+  double get _width => widget.size;
 
-  double get width => (length * height) + ((length - 1) * space);
+  double get _space => widget.space;
+
+  double get _totalWidth => (_length * _height) + ((_length - 1) * _space);
 
   final FocusNode _focusNode = FocusNode();
 
@@ -61,9 +63,9 @@ class PinBox extends State<PinPut> with SingleTickerProviderStateMixin {
   void initState() {
     _loadAnimation();
     _loadInputs();
-    pinController?._addListener(() {
+    _pinController?._addListener(() {
       _clearInputs();
-      focusList.first.requestFocus();
+      _focusList.first.requestFocus();
       controller.forward();
     });
     super.initState();
@@ -71,23 +73,24 @@ class PinBox extends State<PinPut> with SingleTickerProviderStateMixin {
 
   @override
   void dispose() {
-    for (var i = 0; i < length; i++) {
-      textConList[i].dispose();
-      focusList[i].dispose();
+    for (var i = 0; i < _length; i++) {
+      _textCon[i].dispose();
+      _focusList[i].dispose();
     }
     super.dispose();
   }
 
   void _clearInputs() {
-    for (TextEditingController inputs in textConList) {
+    for (TextEditingController inputs in _textCon) {
       inputs.clear();
     }
   }
 
   void _loadInputs() {
-    for (var i = 0; i < length; i++) {
-      focusList.add(FocusNode());
-      textConList.add(TextEditingController()
+    for (var i = 0; i < _length; i++) {
+      _pins.add("");
+      _focusList.add(FocusNode());
+      _textCon.add(TextEditingController()
         ..addListener(() {
           setState(() {});
         }));
@@ -105,47 +108,70 @@ class PinBox extends State<PinPut> with SingleTickerProviderStateMixin {
       });
   }
 
-  void onChanged(String? input, int index) {
+  void _onChangeList() {
+    String code = '';
+    for (var element in _pins) {
+      code = code + element;
+    }
+    widget.onChange?.call(code);
+  }
+
+  void _onChanged(String? input, int index) {
     if (input != null) {
       if (input.isNotEmpty) {
-        if (index != length - 1) {
-          focusList[index + 1].requestFocus();
+        if (index != _length - 1) {
+          _focusList[index + 1].requestFocus();
         }
+        _pins[index] = input;
+      } else {
+        _pins[index] = "";
       }
+      _onChangeList();
     }
   }
 
-  void onKeyListen(RawKeyEvent event) {
+  void _onKeyListen(RawKeyEvent event) {
     if (event.runtimeType.toString() == _rawKeyEvent) {
-      int index = focusList.indexWhere((element) => element.hasFocus);
+      int index = _focusList.indexWhere((element) => element.hasFocus);
       if (index != -1) {
-        if (text(index).isEmpty && index != 0) {
+        if (_text(index).isEmpty) {
           if (event.logicalKey == LogicalKeyboardKey.backspace) {
-            focusList[index - 1].requestFocus();
+            if (index != 0) {
+              _focusList[index - 1].requestFocus();
+            }
+          }
+        } else {
+          if (event.logicalKey != LogicalKeyboardKey.backspace) {
+            final eventKey = event.logicalKey.keyLabel.toString();
+            _textCon[index + 1].text = eventKey;
+            _pins[index + 1] = eventKey;
+          } else if (event.logicalKey == LogicalKeyboardKey.backspace) {
+            _pins[index] = '';
           }
         }
       }
     }
+    _onChangeList();
   }
 
-  Widget boxDecorated(index) {
+  Widget _box(index) {
     return Padding(
-      padding: EdgeInsets.only(left: index == 0 ? 0.0 : space),
+      padding: EdgeInsets.only(left: index == 0 ? 0.0 : _space),
       child: SizedBox(
-        height: height,
-        width: height,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(10.0),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 100),
-            decoration: controller.isAnimating
-                ? focusDecoration
-                : _focusNodeController(index).decoration,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [inputs(index), displayHint(index)],
+        height: _height,
+        width: _width,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 100),
+              decoration: controller.isAnimating
+                  ? _focusDecoration
+                  : _decoration(index).decoration,
             ),
-          ),
+            inputs(index),
+            displayHint(index)
+          ],
         ),
       ),
     );
@@ -153,17 +179,18 @@ class PinBox extends State<PinPut> with SingleTickerProviderStateMixin {
 
   Widget inputs(int index) {
     return TextFormField(
-      controller: textConList[index],
-      autofocus: index == 0 ? autoFocus : false,
-      focusNode: focusList[index],
-      onChanged: (input) => onChanged(input, index),
+      controller: _textCon[index],
+      autofocus: index == 0 ? _autoFocus : false,
+      focusNode: _focusList[index],
+      onChanged: (input) => _onChanged(input, index),
       maxLength: 1,
       maxLines: 1,
       autocorrect: false,
-      inputFormatters: inputFilter,
-      keyboardType: keyBoardType,
+      inputFormatters: _inputFilter,
+      keyboardType: _keyBoardType,
       showCursor: false,
       textAlign: TextAlign.center,
+      style: _style,
       decoration: const InputDecoration(
         filled: true,
         fillColor: Colors.transparent,
@@ -177,11 +204,10 @@ class PinBox extends State<PinPut> with SingleTickerProviderStateMixin {
   }
 
   Widget displayHint(index) {
+    final inputsControl = !_focusList[index].hasFocus && _text(index).isEmpty;
     return Visibility(
-      visible: !focusList[index].hasFocus &&
-          textConList[index].text.isEmpty &&
-          !controller.isAnimating,
-      child: hint,
+      visible: inputsControl && !controller.isAnimating,
+      child: _hint,
     );
   }
 
@@ -195,17 +221,19 @@ class PinBox extends State<PinPut> with SingleTickerProviderStateMixin {
               return Transform(
                 alignment: Alignment.center,
                 transform: Matrix4.identity()
-                  ..translate(15.0 * sin(2 * 3 * pi / 2 * controller.value)),
+                  ..translate(
+                    15.0 * sin(2 * 3 * pi / 2 * controller.value),
+                  ),
                 child: RawKeyboardListener(
                   focusNode: _focusNode,
-                  onKey: onKeyListen,
+                  onKey: _onKeyListen,
                   child: SizedBox(
-                    width: width,
-                    height: height,
+                    width: _totalWidth,
+                    height: _height,
                     child: Row(
                       children: List.generate(
-                        length,
-                        (index) => boxDecorated(index),
+                        _length,
+                        (index) => _box(index),
                       ),
                     ),
                   ),
@@ -280,7 +308,7 @@ extension GetFilter on PinKeyboardType {
   }
 }
 
-extension Border on _FocusNodeController {
+extension _Border on _PinDecoration {
   Decoration get decoration {
     if (textController.text.isEmpty && focusNode.hasFocus) {
       return focusDecoration;
@@ -301,8 +329,8 @@ extension Border on _FocusNodeController {
   }
 }
 
-class _FocusNodeController {
-  _FocusNodeController(
+class _PinDecoration {
+  _PinDecoration(
     this.focusNode,
     this.textController,
     this.focusDecoration,

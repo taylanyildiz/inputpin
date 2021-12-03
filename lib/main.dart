@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:telephone_and_active_code/src/pin_put.dart';
-import 'package:telephone_and_active_code/src/pin_put_box.dart';
+import 'widgets/flutter_pin_put.dart';
 
 void main() => runApp(const App());
 
@@ -50,8 +49,14 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               PinPut(
                 pinLenght: 4,
+                onChange: (input) {
+                  print(input);
+                },
                 pinController: pinPutController,
-                focusDecoration: const BoxDecoration(color: Colors.red),
+                focusDecoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10.0),
+                  border: Border.all(color: Colors.red, width: 2.0),
+                ),
                 initDecoration: const BoxDecoration(color: Colors.orange),
                 fillDecoration: const BoxDecoration(color: Colors.blue),
               ),
