@@ -20,9 +20,9 @@ class PinBox extends State<PinPut> with SingleTickerProviderStateMixin {
 
   Decoration get _initDecoartion => widget.initDecoration;
 
-  Decoration get _focusDecoration => widget.focusDecoration;
+  Decoration get _focusDecoration => widget.focusDecoration ?? _initDecoartion;
 
-  Decoration get _fillDecoration => widget.fillDecoration;
+  Decoration get _fillDecoration => widget.fillDecoration ?? _initDecoartion;
 
   TextInputType get _keyBoardType => widget.pinType.type;
 
@@ -142,9 +142,11 @@ class PinBox extends State<PinPut> with SingleTickerProviderStateMixin {
           }
         } else {
           if (event.logicalKey != LogicalKeyboardKey.backspace) {
-            final eventKey = event.logicalKey.keyLabel.toString();
-            _textCon[index + 1].text = eventKey;
-            _pins[index + 1] = eventKey;
+            if (index != _length - 1) {
+              final eventKey = event.logicalKey.keyLabel.toString();
+              _textCon[index + 1].text = eventKey;
+              _pins[index + 1] = eventKey;
+            }
           } else if (event.logicalKey == LogicalKeyboardKey.backspace) {
             _pins[index] = '';
           }

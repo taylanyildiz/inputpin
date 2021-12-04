@@ -39,11 +39,11 @@ class PinPut extends StatefulWidget {
 
   /// Focus display box decoration.
   /// default {"focusDecoration = initDecoration"}.
-  final Decoration focusDecoration;
+  final Decoration? focusDecoration;
 
   /// If pass where box displasy this [fillDecoration].
   /// default {"fillDecoration = initDecoration"}.
-  final Decoration fillDecoration;
+  final Decoration? fillDecoration;
 
   /// Displayed on top of the [InputDecorator.child]
   /// when the input [empty] or not [focus].
@@ -70,8 +70,8 @@ class PinPut extends StatefulWidget {
     String hintText = '-',
     TextStyle? textStyle,
     Decoration? initDecoration,
-    Decoration? fillDecoration,
-    Decoration? focusDecoration,
+    this.fillDecoration,
+    this.focusDecoration,
     Widget? hint,
     double? size,
     double? space,
@@ -83,19 +83,25 @@ class PinPut extends StatefulWidget {
         assert(initDecoration == null || initDecoration.debugAssertIsValid()),
         pinType = pinType ?? PinKeyboardType.number,
         autoFocus = autoFocus ?? true,
-        initDecoration = initDecoration ?? BoxDecoration(color: initialColor),
-        fillDecoration = fillDecoration ?? BoxDecoration(color: initialColor),
-        focusDecoration = focusDecoration ?? BoxDecoration(color: initialColor),
+        initDecoration = initDecoration ??
+            BoxDecoration(
+              color: Colors.white,
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black45,
+                  blurRadius: 5.0,
+                  offset: Offset(0.0, 5.0),
+                ),
+              ],
+              borderRadius: BorderRadius.circular(10.0),
+            ),
         textStyle = textStyle ?? const TextStyle(color: Colors.black),
         size = size ?? 60.0,
         space = space ?? 20.0,
         hint = hint ??
             Text(
               hintText,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 30.0,
-              ),
+              style: const TextStyle(color: Colors.white, fontSize: 30.0),
             ),
         super(key: key);
 
