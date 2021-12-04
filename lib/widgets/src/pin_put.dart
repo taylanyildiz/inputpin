@@ -28,11 +28,11 @@ class PinPut extends StatefulWidget {
 
   /// this function [onChange]
   /// returns each input change
-  final Function(String? input)? onChange;
+  final Function(String? pin)? onChange;
 
   /// this controller can make clear pin puts.
   /// just call [clear] method.
-  final PinPutController? pinPutController;
+  final PinPutController? pinController;
 
   /// Default display box decoration.
   final Decoration initDecoration;
@@ -44,9 +44,6 @@ class PinPut extends StatefulWidget {
   /// If pass where box displasy this [fillDecoration].
   /// default {"fillDecoration = initDecoration"}.
   final Decoration fillDecoration;
-
-  /// Pinput controller for auto clear.
-  final PinPutController? pinController;
 
   /// Displayed on top of the [InputDecorator.child]
   /// when the input [empty] or not [focus].
@@ -65,7 +62,6 @@ class PinPut extends StatefulWidget {
   PinPut({
     Key? key,
     required this.pinLenght,
-    this.pinPutController,
     this.pinController,
     this.onChange,
     PinKeyboardType? pinType,
@@ -96,7 +92,10 @@ class PinPut extends StatefulWidget {
         hint = hint ??
             Text(
               hintText,
-              style: const TextStyle(color: Colors.black, fontSize: 30.0),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 30.0,
+              ),
             ),
         super(key: key);
 

@@ -60,11 +60,39 @@ class _HomeScreenState extends State<HomeScreen> {
                 initDecoration: const BoxDecoration(color: Colors.orange),
                 fillDecoration: const BoxDecoration(color: Colors.blue),
               ),
+              const SizedBox(height: 10.0),
+              PinPut(
+                pinLenght: 4,
+                onChange: (input) {
+                  print(input);
+                },
+                pinType: PinKeyboardType.name,
+                focusDecoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10.0),
+                  border: Border.all(color: Colors.red, width: 2.0),
+                ),
+                initDecoration: const BoxDecoration(color: Colors.orange),
+                fillDecoration: const BoxDecoration(color: Colors.blue),
+                hint: Container(
+                  height: 10.0,
+                  width: 10.0,
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
               const SizedBox(height: 50.0),
               MaterialButton(
                 onPressed: onClear,
                 color: Colors.blue,
-                child: const Text('clear'),
+                child: const Text(
+                  'TEST',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 17.0,
+                  ),
+                ),
               ),
             ],
           ),

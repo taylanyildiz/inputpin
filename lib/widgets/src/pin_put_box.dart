@@ -30,24 +30,9 @@ class PinBox extends State<PinPut> with SingleTickerProviderStateMixin {
 
   PinPutController? get _pinController => widget.pinController;
 
-  final List _textCon = List<TextEditingController>.empty(growable: true);
-
-  final List _focusList = List<FocusNode>.empty(growable: true);
-
-  final List _pins = List<String>.empty(growable: true);
-
   String _text(index) => _textCon[index].text;
 
   Widget get _hint => widget.hint;
-
-  _PinDecoration _decoration(index) => _PinDecoration(
-        _focusList[index],
-        _textCon[index],
-        _focusDecoration,
-        _initDecoartion,
-        _fillDecoration,
-        index == _length - 1,
-      );
 
   double get _height => widget.size;
 
@@ -58,6 +43,21 @@ class PinBox extends State<PinPut> with SingleTickerProviderStateMixin {
   double get _totalWidth => (_length * _height) + ((_length - 1) * _space);
 
   final FocusNode _focusNode = FocusNode();
+
+  final List<TextEditingController> _textCon = List.empty(growable: true);
+
+  final List<FocusNode> _focusList = List.empty(growable: true);
+
+  final List _pins = List<String>.empty(growable: true);
+
+  _PinDecoration _decoration(index) => _PinDecoration(
+        _focusList[index],
+        _textCon[index],
+        _focusDecoration,
+        _initDecoartion,
+        _fillDecoration,
+        (index == _length - 1), // is last.
+      );
 
   @override
   void initState() {
@@ -180,24 +180,26 @@ class PinBox extends State<PinPut> with SingleTickerProviderStateMixin {
   Widget inputs(int index) {
     return TextFormField(
       controller: _textCon[index],
-      autofocus: index == 0 ? _autoFocus : false,
       focusNode: _focusList[index],
       onChanged: (input) => _onChanged(input, index),
+      autofocus: index == 0 ? _autoFocus : false,
       maxLength: 1,
       maxLines: 1,
-      autocorrect: false,
       inputFormatters: _inputFilter,
       keyboardType: _keyBoardType,
+      autocorrect: false,
       showCursor: false,
       textAlign: TextAlign.center,
       style: _style,
+      enableSuggestions: false,
       decoration: const InputDecoration(
         filled: true,
         fillColor: Colors.transparent,
         counterText: "",
+        errorStyle: TextStyle(fontSize: 0.0),
         counterStyle: TextStyle(fontSize: 0.0),
         border: OutlineInputBorder(borderSide: BorderSide.none),
-        errorBorder: OutlineInputBorder(),
+        errorBorder: OutlineInputBorder(borderSide: BorderSide.none),
         contentPadding: EdgeInsets.zero,
       ),
     );
@@ -216,30 +218,31 @@ class PinBox extends State<PinPut> with SingleTickerProviderStateMixin {
     return LayoutBuilder(
       builder: (context, constraints) {
         return AnimatedBuilder(
-            animation: controller,
-            builder: (context, child) {
-              return Transform(
-                alignment: Alignment.center,
-                transform: Matrix4.identity()
-                  ..translate(
-                    15.0 * sin(2 * 3 * pi / 2 * controller.value),
-                  ),
-                child: RawKeyboardListener(
-                  focusNode: _focusNode,
-                  onKey: _onKeyListen,
-                  child: SizedBox(
-                    width: _totalWidth,
-                    height: _height,
-                    child: Row(
-                      children: List.generate(
-                        _length,
-                        (index) => _box(index),
-                      ),
+          animation: controller,
+          builder: (context, child) {
+            return Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()
+                ..translate(
+                  15.0 * sin(2 * 3 * pi / 2 * controller.value),
+                ),
+              child: RawKeyboardListener(
+                focusNode: _focusNode,
+                onKey: _onKeyListen,
+                child: SizedBox(
+                  width: _totalWidth,
+                  height: _height,
+                  child: Row(
+                    children: List.generate(
+                      _length,
+                      (index) => _box(index),
                     ),
                   ),
                 ),
-              );
-            });
+              ),
+            );
+          },
+        );
       },
     );
   }
