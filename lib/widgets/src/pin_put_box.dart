@@ -81,8 +81,10 @@ class PinBox extends State<PinPut> with SingleTickerProviderStateMixin {
   }
 
   void _clearInputs() {
-    for (TextEditingController inputs in _textCon) {
-      inputs.clear();
+    for (var i = 0; i < _length; i++) {
+      _textCon[i].clear();
+      _pins[i] = "";
+      setState(() {});
     }
   }
 
